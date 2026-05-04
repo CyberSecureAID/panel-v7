@@ -2,7 +2,7 @@
    MODULE: State
    Purpose : Single source of truth for runtime state.
              Mutated only through App and Chain modules.
-================================================================ */
+============================================================= */
 const S = {
   /* Web3 instances */
   web3:         null,
