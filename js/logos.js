@@ -2,7 +2,7 @@
    MODULE: Logos
    Purpose : Fetch coin logo URLs from CoinGecko public API.
              Falls back gracefully (hides broken img elements).
-================================================================ */
+============================================================= */
 const Logos = {
   MAP: [
     { coinId: 'binancecoin', targets: ['bnbLogo']               },
