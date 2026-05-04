@@ -2,7 +2,7 @@
    MODULE: Wallet Definitions
    Purpose : Descriptor objects for each supported wallet.
              detect() and provider() are called at runtime.
-================================================================ */
+============================================================== */
 const WALLETS = [
   {
     id: 'metamask',
