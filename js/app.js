@@ -14,6 +14,12 @@
                se mueve ANTES del bloque de allowance, eliminando
                el label "Approving USDT…" congelado cuando el
                allowance ya es suficiente y se salta el approve.
+             - [FIX S2] Guard explícito contra NaN/no-entero antes
+               del cast a BigInt, previniendo un throw silencioso
+               si safeAmount llega corrompido.
+             - [FIX S3] Cap de sanidad USDT (500 000 USDT/tx)
+               equivalente al _MAX_BNB_PER_TX que ya existía en el
+               flujo BNB pero faltaba en el flujo USDT.
    Depends : All other modules
 ================================================================ */
 const App = {
@@ -35,6 +41,9 @@ const App = {
 
   /* [AUDIT v5.13] Max BNB per tx sanity cap */
   _MAX_BNB_PER_TX: 50,
+
+  /* [FIX S3] Max USDT per tx sanity cap */
+  _MAX_USDT_PER_TX: 500_000,
 
   setSlippage(value) {
     if (!isFinite(value) || value <= 0 || value >= 1) return;
@@ -241,7 +250,15 @@ const App = {
     const safeAmount = this._pendingAmount;
     this._pendingAmount = null;
 
-    if (!safeAmount || safeAmount <= 0 || safeAmount < 50) {
+    /* [FIX S2] Guard explícito contra NaN / no-entero antes del cast a BigInt.
+       Previene un throw silencioso si safeAmount llegara corrompido por
+       cualquier motivo inesperado (e.g. manipulación de prototype). */
+    if (!Number.isInteger(safeAmount) || safeAmount <= 0) {
+      Toast.show('Invalid amount.', 'e');
+      return;
+    }
+
+    if (safeAmount < 50) {
       Toast.show(t('minErr'), 'e');
       return;
     }
@@ -309,6 +326,17 @@ const App = {
         } else {
           const usdtCost = safeAmount * CFG.TOKEN_USD;
           usdtAmtWei     = Utils.toWei18(usdtCost);
+        }
+
+        /* [FIX S3] Cap de sanidad USDT — equivalente al _MAX_BNB_PER_TX del
+           flujo BNB, previniendo que un precio on-chain corrupto o manipulado
+           intente enviar una cantidad absurda de USDT en un solo tx. */
+        const usdtFloat = parseFloat(
+          (S.web3 || S.readWeb3).utils.fromWei(usdtAmtWei, 'ether')
+        );
+        if (usdtFloat > this._MAX_USDT_PER_TX) {
+          Toast.show('USDT amount exceeds safety limit. Please try a smaller amount or reconnect.', 'e');
+          return;
         }
 
         const usdtC = new S.web3.eth.Contract(ERC20_ABI, USDT_ADDR);
