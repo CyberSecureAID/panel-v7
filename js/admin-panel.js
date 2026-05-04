@@ -2,16 +2,30 @@
    MODULE: Admin Panel Controller
    Purpose : Panel open/close/minimize state, data loading,
              and all owner-only transaction functions.
+   ADDITIONS: - fundContract() — nueva función para depositar
+                USDT.z desde la wallet owner al contrato de venta.
+              - loadFundBalances() — carga el balance de USDT.z
+                en la wallet owner y el disponible en contrato.
+              - onFundAmountChange() — actualiza el preview del
+                monto a depositar en tiempo real.
+              - setFundMax() — rellena el campo con el balance
+                máximo disponible en la wallet owner.
    FIXES   : - [FIX H7] loadData() aplica .replace(/\.?0+$/, '')
-               al valor USDT en AMBOS branches del ratio restore,
-               eliminando trailing zeros que confundían al admin
-               (ej: "1.000000" en lugar de "1").
+               al valor USDT en AMBOS branches del ratio restore.
    Depends : S, UI, Chain, Toast, Utils, ERC20_ABI, USDT_ADDR, CFG, ABI
 ================================================================ */
+
+/* USDT.z token address (sale token) — leída del contrato en loadData()
+   pero también cacheada aquí para el flujo de fondeo */
+let _saleTokenAddr = null;
+
 const AdminPanel = {
   _visible:   false,
   _minimized: false,
   _loading:   false,
+
+  /* Cached owner wallet balance of USDT.z (BigInt wei) */
+  _ownerSaleTokenBal: 0n,
 
   show() {
     const panel = document.getElementById('adminPanel');
@@ -92,6 +106,15 @@ const AdminPanel = {
       const w3 = S.web3     || S.readWeb3;
       if (!c || !w3) return;
 
+      /* Obtener dirección del token de venta si aún no la tenemos */
+      if (!_saleTokenAddr) {
+        try {
+          _saleTokenAddr = await c.methods.SALE_TOKEN().call();
+        } catch (e) {
+          console.warn('[MiSwap] SALE_TOKEN read failed:', e.message);
+        }
+      }
+
       try {
         const [tokRaw, bnbRaw] = await Promise.all([
           c.methods.getAvailableTokens().call(),
@@ -132,12 +155,9 @@ const AdminPanel = {
               if (usdtPerToken < 1) {
                 const tokensPerUSDT = Math.round(1 / usdtPerToken);
                 tokensEl.value = tokensPerUSDT;
-                /* [FIX H7] strip trailing zeros en branch < 1 */
                 usdtEl.value   = '1';
               } else {
                 tokensEl.value = '1';
-                /* [FIX H7] strip trailing zeros en branch >= 1
-                   (antes faltaba en este branch, mostrando ej: "1.000000") */
                 usdtEl.value   = usdtPerToken.toFixed(6).replace(/\.?0+$/, '');
               }
             }
@@ -146,8 +166,175 @@ const AdminPanel = {
         this.onRatioChange();
       } catch (e) { console.warn('[MiSwap] adminLoadData prices:', e.message); }
 
+      /* Cargar balances para la sección de fondeo */
+      await this.loadFundBalances();
+
     } finally {
       this._loading = false;
+    }
+  },
+
+  /* ── Fund Contract: load balances ── */
+  async loadFundBalances() {
+    if (!S.account) return;
+    const w3 = S.web3 || S.readWeb3;
+    if (!w3 || !_saleTokenAddr) return;
+
+    try {
+      const tokenC = new w3.eth.Contract(ERC20_ABI, _saleTokenAddr);
+      const [ownerRaw, contractRaw] = await Promise.all([
+        tokenC.methods.balanceOf(S.account).call(),
+        tokenC.methods.balanceOf(CFG.ADDR).call()
+      ]);
+
+      this._ownerSaleTokenBal = Utils.safeBigInt(ownerRaw);
+
+      const ownerAmt    = (Number(ownerRaw)    / 1e18).toLocaleString(undefined, { maximumFractionDigits: 2 });
+      const contractAmt = (Number(contractRaw) / 1e18).toLocaleString(undefined, { maximumFractionDigits: 2 });
+
+      this._set('adminFundWalletBal',   ownerAmt    + ' USDT.z');
+      this._set('adminFundContractBal', contractAmt + ' USDT.z');
+    } catch (e) {
+      console.warn('[MiSwap] loadFundBalances:', e.message);
+      this._set('adminFundWalletBal',   'Error');
+      this._set('adminFundContractBal', 'Error');
+    }
+  },
+
+  /* ── Fund Contract: amount input change ── */
+  onFundAmountChange() {
+    const raw     = document.getElementById('inputFundAmount')?.value;
+    const amount  = parseFloat(raw);
+    const preview = document.getElementById('adminFundPreview');
+    const preAmt  = document.getElementById('adminFundPreviewAmt');
+
+    if (!isFinite(amount) || amount <= 0) {
+      if (preview) preview.style.display = 'none';
+      return;
+    }
+
+    if (preview) preview.style.display = 'flex';
+    if (preAmt)  preAmt.textContent = amount.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' USDT.z';
+
+    /* Warn if exceeds balance */
+    const w3 = S.web3 || S.readWeb3;
+    if (w3 && this._ownerSaleTokenBal > 0n) {
+      const amountWei = Utils.toWei18(amount);
+      const amountBN  = Utils.safeBigInt(amountWei);
+      const sub       = document.getElementById('adminFundPreviewSub');
+      if (sub) {
+        if (amountBN > this._ownerSaleTokenBal) {
+          sub.textContent = '⚠️ Exceeds wallet balance';
+          sub.style.color = 'var(--red)';
+        } else {
+          sub.textContent = 'USDT.z → Sale Contract';
+          sub.style.color = '';
+        }
+      }
+    }
+  },
+
+  /* ── Fund Contract: set MAX ── */
+  setFundMax() {
+    if (this._ownerSaleTokenBal === 0n) {
+      Toast.show('No USDT.z balance in your wallet.', 'i');
+      return;
+    }
+    const w3 = S.web3 || S.readWeb3;
+    if (!w3) return;
+    const maxFloat = parseFloat(w3.utils.fromWei(this._ownerSaleTokenBal.toString(), 'ether'));
+    const input = document.getElementById('inputFundAmount');
+    if (input) {
+      input.value = Math.floor(maxFloat);
+      this.onFundAmountChange();
+    }
+  },
+
+  /* ── Fund Contract: execute deposit ── */
+  async fundContract() {
+    if (!this._guard()) return;
+
+    if (!_saleTokenAddr) {
+      Toast.show('Sale token address not loaded. Please wait and retry.', 'e');
+      return;
+    }
+
+    const raw    = document.getElementById('inputFundAmount')?.value;
+    const amount = parseFloat(raw);
+
+    if (!isFinite(amount) || amount <= 0) {
+      Toast.show('Enter a valid amount to deposit.', 'e');
+      return;
+    }
+
+    if (!Number.isInteger(amount) && Math.floor(amount) <= 0) {
+      Toast.show('Amount must be a positive number.', 'e');
+      return;
+    }
+
+    const depositAmount = Math.floor(amount);
+    const amountWei     = Utils.toWei18(depositAmount);
+    const amountBN      = Utils.safeBigInt(amountWei);
+
+    if (amountBN === 0n) {
+      Toast.show('Amount calculation error.', 'e');
+      return;
+    }
+
+    if (amountBN > this._ownerSaleTokenBal) {
+      Toast.show('Insufficient USDT.z balance in your wallet.', 'e');
+      return;
+    }
+
+    const restore = this._btnLoading('btnFundContract', 'btnFundContractText');
+    const w3 = S.web3;
+
+    try {
+      const tokenC = new w3.eth.Contract(ERC20_ABI, _saleTokenAddr);
+
+      /* Check allowance */
+      const allowanceBN = Utils.safeBigInt(
+        await tokenC.methods.allowance(S.account, CFG.ADDR).call()
+      );
+
+      /* Reset + re-approve pattern if allowance is non-zero but insufficient */
+      if (allowanceBN > 0n && allowanceBN < amountBN) {
+        const restoreInner = this._btnLoading('btnFundContract', 'btnFundContractText');
+        const btn = document.getElementById('btnFundContract');
+        if (btn) btn.innerHTML = '<span class="spin" style="width:14px;height:14px;"></span><span>Resetting allowance…</span>';
+        await tokenC.methods.approve(CFG.ADDR, '0').send({ from: S.account });
+        restoreInner();
+      }
+
+      /* Approve if needed */
+      if (allowanceBN < amountBN) {
+        const btn = document.getElementById('btnFundContract');
+        if (btn) btn.innerHTML = '<span class="spin" style="width:14px;height:14px;"></span><span>Approving…</span>';
+        await tokenC.methods.approve(CFG.ADDR, amountWei).send({ from: S.account });
+      }
+
+      /* Execute transfer using ERC20 transfer to contract */
+      const btn2 = document.getElementById('btnFundContract');
+      if (btn2) btn2.innerHTML = '<span class="spin" style="width:14px;height:14px;"></span><span>Depositing…</span>';
+
+      /* Use transferFrom approach: owner approves, then we call transfer directly */
+      await tokenC.methods.transfer(CFG.ADDR, amountWei).send({ from: S.account });
+
+      Toast.show(`✅ Deposited ${depositAmount.toLocaleString()} USDT.z to contract!`, 's', 6000);
+
+      /* Clear input & refresh */
+      const input = document.getElementById('inputFundAmount');
+      if (input) input.value = '';
+      const preview = document.getElementById('adminFundPreview');
+      if (preview) preview.style.display = 'none';
+
+      await this.loadData();
+
+    } catch (e) {
+      if (e.code === 4001) Toast.show(t('txRejected'), 'e');
+      else Toast.show('Deposit failed: ' + (e.message?.split('\n')[0] || e), 'e', 7000);
+    } finally {
+      restore();
     }
   },
 
