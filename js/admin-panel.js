@@ -1,4 +1,4 @@
-/* ================================================================
+/* ============================================================
    MODULE: Admin Panel Controller
    Purpose : Panel open/close/minimize state, data loading,
              and all owner-only transaction functions.
