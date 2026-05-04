@@ -1,4 +1,4 @@
-/* ============================================================
+/* ===========================================================
    MODULE: i18n (Internationalisation)
    Purpose : English/Spanish string table.
    FIXES   : - adminPriceHint now uses innerHTML so <strong> tags
