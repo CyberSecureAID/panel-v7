@@ -1,7 +1,7 @@
 /* ================================================================
    MODULE: ABI Definitions
    Purpose : Solidity ABI for TokenSale contract + ERC-20 minimal ABI.
-================================================================ */
+============================================================== */
 
 /** Full ABI for TokenSale.sol */
 const ABI = [
