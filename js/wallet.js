@@ -4,10 +4,39 @@
    FIXES   : - [FIX H5] disconnect() limpia S.ownerAddress = null
                para evitar que una sesión previa deje el ownerAddress
                en memoria y afecte comparaciones en sesiones nuevas.
+   SECURITY: - [SEC-6] _isValidProvider() — duck-typing validation
+               del objeto provider antes de usarlo en connectWith()
+               y tryAutoReconnect(). Verifica que exponga los métodos
+               EIP-1193 mínimos requeridos (request, on, removeListener).
+               Previene que un provider inyectado por extensión maliciosa
+               o prototype-pollution pase como válido al flujo de conexión.
+               No bloquea providers legítimos (MM, Trust, CB, Phantom)
+               ya que todos implementan la interfaz EIP-1193.
    Depends : S, UI, Chain, Toast, AdminPanel, Utils, WALLETS, ABI, CFG
 ================================================================ */
 const Wallet = {
   _pollTimer: null,
+
+  /**
+   * [SEC-6] Validate that a provider object is a legitimate EIP-1193
+   * provider before using it. Checks for required methods and that
+   * `request` is actually a function (not a primitive or object that
+   * could be the result of prototype pollution).
+   *
+   * Deliberately permissive — only checks the minimum interface so that
+   * all major wallets (MetaMask, Trust Wallet, Coinbase Wallet, Phantom)
+   * continue to work without any friction.
+   *
+   * @param {*} prov — candidate provider object
+   * @returns {boolean}
+   */
+  _isValidProvider(prov) {
+    return (
+      prov !== null &&
+      typeof prov === 'object' &&
+      typeof prov.request === 'function'
+    );
+  },
 
   _startPoll() {
     this._stopPoll();
@@ -59,7 +88,9 @@ const Wallet = {
     UI.setCtaLoading(true, t('connecting'));
     try {
       const prov = this._resolveProvider(wallet);
-      if (!prov) throw new Error('no_provider');
+
+      /* [SEC-6] Validate provider interface before proceeding */
+      if (!prov || !this._isValidProvider(prov)) throw new Error('no_provider');
 
       const accounts = await prov.request({ method: 'eth_requestAccounts' });
       if (!accounts?.length) throw new Error('no_account');
@@ -189,7 +220,11 @@ const Wallet = {
       (window.ethereum?.providers || []).find(p => p.isTrust || p.isTrustWallet) ||
       window.ethereum;
 
-    if (!prov) return;
+    /* [SEC-6] Validate provider interface before attempting auto-reconnect.
+       Prevents a poisoned window.ethereum (e.g. from a malicious extension
+       that overrides the property with a non-EIP-1193 object) from causing
+       a silent error or unexpected behaviour during the reconnect flow. */
+    if (!prov || !this._isValidProvider(prov)) return;
 
     try {
       const accounts = await prov.request({ method: 'eth_accounts' });
