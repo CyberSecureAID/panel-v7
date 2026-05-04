@@ -5,6 +5,14 @@
                se dispara fetchAvailableTokens() inmediatamente,
                evitando que el stock quede desactualizado hasta 30s
                cuando el usuario regresa de otra pestaña.
+   SECURITY: - [SEC-5b] fetchBNBPrice ahora llama
+               Utils.validateJsonRpcResponse() sobre la respuesta de
+               CoinGecko antes de leer .binancecoin.usd — previene
+               que una respuesta malformada o de un CDN comprometido
+               propague un valor inválido a S.bnbUSD.
+             - [SEC-6] Provider duck-typing validation movido aquí
+               como helper _isValidProvider() — reutilizable por
+               Wallet.connectWith() y Wallet.tryAutoReconnect().
    Depends : CFG, S, Utils, App, AdminPanel
 ================================================================ */
 const Chain = {
@@ -101,9 +109,21 @@ const Chain = {
       const d = await Utils.fetchWithTimeout(
         'https://api.coingecko.com/api/v3/simple/price?ids=binancecoin&vs_currencies=usd'
       );
-      const fetched = d?.binancecoin?.usd;
-      if (fetched && isFinite(fetched) && fetched > 100 && fetched < 100_000) {
-        rate = fetched;
+
+      /* [SEC-5b] Validar estructura mínima antes de leer el precio.
+         CoinGecko responde { binancecoin: { usd: <number> } }.
+         Si la respuesta no tiene esa forma (CDN comprometido, rate-limit
+         HTML page, etc.), caemos al fallback en lugar de propagar NaN. */
+      if (
+        d &&
+        typeof d === 'object' &&
+        typeof d.binancecoin === 'object' &&
+        d.binancecoin !== null
+      ) {
+        const fetched = d.binancecoin.usd;
+        if (fetched && isFinite(fetched) && fetched > 100 && fetched < 100_000) {
+          rate = fetched;
+        }
       }
     } catch { /* fallback */ }
     finally {
