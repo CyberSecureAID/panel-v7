@@ -11,6 +11,13 @@
                the network changed during a tx, the badge could
                show a stale "Not connected" label after the tx
                completed because only updateCTA() was called.
+   SECURITY: - [SEC-9] buildWalletList() now calls Utils.validateImgUrl()
+               before assigning any URL to img.src. Wallet icon URLs
+               come from the hardcoded WALLETS array (not user input),
+               so this is a defence-in-depth measure — it ensures that
+               if the WALLETS array is ever extended with an external
+               URL, it passes through the ALLOWED_IMG_ORIGINS check
+               in utils.js before reaching the DOM.
    Depends : S, I18nCtrl (i18n.js), Utils (utils.js), WALLETS (wallets.js)
 ================================================================ */
 const UI = {
@@ -129,7 +136,18 @@ const UI = {
       iconWrap.className = 'w-icon';
       iconWrap.style.background = w.bg;
       const img = document.createElement('img');
-      img.src = w.icon; img.alt = w.name;
+
+      /* [SEC-9] Validate icon URL against ALLOWED_IMG_ORIGINS before
+         assigning to img.src. Wallet icons come from the hardcoded
+         WALLETS array, but this check ensures the pattern stays safe
+         if the list is ever extended with a new wallet entry. */
+      if (Utils.validateImgUrl(w.icon)) {
+        img.src = w.icon;
+      } else {
+        img.style.display = 'none';
+      }
+
+      img.alt = w.name;
       img.onerror = () => { img.style.display = 'none'; };
       iconWrap.appendChild(img);
 
