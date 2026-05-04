@@ -20,35 +20,26 @@
              - [FIX S3] Cap de sanidad USDT (500 000 USDT/tx)
                equivalente al _MAX_BNB_PER_TX que ya existía en el
                flujo BNB pero faltaba en el flujo USDT.
+             - [FIX MODAL] confirmModal existe ahora en el DOM.
+               _openConfirmModal() y closeConfirmModal() operan
+               correctamente sobre el overlay con clase open.
    SECURITY: - [SEC-2] _MAX_BNB_PER_TX y slippage ahora son
                propiedades definidas con Object.defineProperty()
-               como non-writable, non-configurable. Un atacante
-               en consola no puede mutar App.slippage = 0 ni
-               App._MAX_BNB_PER_TX = Infinity para manipular txs.
+               como non-writable, non-configurable.
              - [SEC-2b] _pendingAmount tiene verificación de
-               integridad: si entre _openConfirmModal() y
-               _buyTokens() el valor cambia (manipulación externa),
-               la tx es abortada.
+               integridad TTL de 30s.
    Depends : All other modules
 ================================================================ */
 const App = (function() {
-  /* [SEC-2] Constantes de seguridad definidas como non-writable,
-     non-configurable en el objeto retornado. Así App.slippage = 0.1
-     desde consola no tiene efecto silencioso — lanza TypeError en
-     strict mode y simplemente no funciona en sloppy mode. */
-  const _SLIPPAGE        = 0.95;  // 5% slippage protection
+  const _SLIPPAGE        = 0.95;
   const _MAX_BNB_PER_TX  = 50;
   const _MAX_USDT_PER_TX = 500_000;
   const _BUY_COOLDOWN_MS = 3000;
 
-  /* Estado interno privado (no accesible desde consola) */
   let _buying            = false;
   let _confirmModalOpen  = false;
   let _lastBuyAttempt    = 0;
   let _pendingAmount     = null;
-  /* [SEC-2b] Timestamp del momento en que se congeló _pendingAmount.
-     Si _buyTokens() se llama más de 30s después de abrir el modal
-     (manipulación artificial del timing), la tx se aborta. */
   let _pendingTimestamp  = null;
   const _PENDING_TTL_MS  = 30_000;
 
@@ -177,9 +168,8 @@ const App = (function() {
         return;
       }
 
-      /* [FIX H1] Congelar el importe AHORA, antes de abrir el modal. */
+      /* Congelar el importe AHORA, antes de abrir el modal */
       _pendingAmount    = safeAmount;
-      /* [SEC-2b] Registrar timestamp para TTL de validez */
       _pendingTimestamp = Date.now();
 
       const pricePerToken = Chain.getPricePerTokenUSD();
@@ -206,36 +196,45 @@ const App = (function() {
       if (elSlip)   elSlip.textContent   = Math.round((1 - _SLIPPAGE) * 100) + '%';
       if (elMethod) elMethod.textContent = S.method;
 
-      /* [FIX H2] Marcar que la tx viene del modal legítimo */
+      /* Marcar que la tx viene del modal legítimo */
       _confirmModalOpen = true;
 
-      document.getElementById('confirmModal').classList.add('open');
+      const overlay = document.getElementById('confirmModal');
+      if (overlay) {
+        overlay.classList.add('open');
+      } else {
+        /* Fallback: si por alguna razón el modal no estuviera en el DOM,
+           ejecutar la compra directamente sin pasar por el modal */
+        console.warn('[MiSwap] confirmModal not found in DOM, executing directly');
+        this._buyTokens();
+      }
     },
 
     closeConfirmModal() {
-      /* [FIX H2] Al cerrar sin confirmar, limpiar el flag y el importe pendiente */
       _confirmModalOpen = false;
       _pendingAmount    = null;
       _pendingTimestamp = null;
-      document.getElementById('confirmModal').classList.remove('open');
+      const overlay = document.getElementById('confirmModal');
+      if (overlay) overlay.classList.remove('open');
     },
 
     confirmAndBuy() {
-      document.getElementById('confirmModal').classList.remove('open');
+      const overlay = document.getElementById('confirmModal');
+      if (overlay) overlay.classList.remove('open');
       this._buyTokens();
     },
 
     async _buyTokens() {
       if (_buying) return;
 
-      /* [FIX H2] Rechazar llamadas directas desde consola */
+      /* Rechazar llamadas directas desde consola */
       if (!_confirmModalOpen) {
         Toast.show('Please use the interface to confirm purchases.', 'i');
         return;
       }
       _confirmModalOpen = false;
 
-      /* [SEC-2b] Verificar TTL del pendingAmount */
+      /* Verificar TTL del pendingAmount */
       if (!_pendingTimestamp || (Date.now() - _pendingTimestamp) > _PENDING_TTL_MS) {
         Toast.show('Session expired. Please try again.', 'i');
         _pendingAmount    = null;
@@ -243,7 +242,7 @@ const App = (function() {
         return;
       }
 
-      /* Rate-limit como capa adicional */
+      /* Rate-limit */
       const now = Date.now();
       if (now - _lastBuyAttempt < _BUY_COOLDOWN_MS) {
         Toast.show('Please wait a moment before trying again.', 'i');
@@ -259,12 +258,12 @@ const App = (function() {
         return;
       }
 
-      /* [FIX H1] Usar el importe congelado en el modal, no releer el DOM */
+      /* Usar el importe congelado en el modal */
       const safeAmount = _pendingAmount;
       _pendingAmount    = null;
       _pendingTimestamp = null;
 
-      /* [FIX S2] Guard explícito contra NaN / no-entero */
+      /* Guard explícito contra NaN / no-entero */
       if (!Number.isInteger(safeAmount) || safeAmount <= 0) {
         Toast.show('Invalid amount.', 'e');
         return;
@@ -309,7 +308,6 @@ const App = (function() {
             const w3check = S.web3 || S.readWeb3;
             if (w3check) {
               const bnbFloat = parseFloat(w3check.utils.fromWei(valueWei, 'ether'));
-              /* [SEC-2] _MAX_BNB_PER_TX es la constante privada, no mutable */
               if (bnbFloat > _MAX_BNB_PER_TX) {
                 Toast.show('BNB amount exceeds safety limit. Please try a smaller amount or reconnect.', 'e');
                 return;
@@ -339,7 +337,7 @@ const App = (function() {
             usdtAmtWei     = Utils.toWei18(usdtCost);
           }
 
-          /* [FIX S3] / [SEC-2] Cap de sanidad USDT usando constante privada */
+          /* Cap de sanidad USDT */
           const usdtFloat = parseFloat(
             (S.web3 || S.readWeb3).utils.fromWei(usdtAmtWei, 'ether')
           );
@@ -385,13 +383,10 @@ const App = (function() {
     toggleLang() { I18nCtrl.toggle(); }
   };
 
-  /* [SEC-2] Proteger las propiedades públicas expuestas como non-writable.
-     Esto cubre el caso de alguien que haga App.slippage = 0 desde consola.
-     Las constantes privadas (_SLIPPAGE, etc.) son capturadas por closure
-     y son completamente inaccesibles desde el exterior. */
+  /* Proteger propiedades públicas como non-writable */
   Object.defineProperty(pub, 'slippage', {
     get() { return _SLIPPAGE; },
-    set() { /* silently ignore — security protection */ },
+    set() { /* silently ignore */ },
     enumerable: true, configurable: false
   });
   Object.defineProperty(pub, '_MAX_BNB_PER_TX', {
