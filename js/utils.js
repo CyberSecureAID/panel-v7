@@ -8,6 +8,17 @@
                utility — previously duplicated in app.js and
                admin-panel.js, risking silent divergence if one
                copy was patched and the other was not.
+   SECURITY: - [SEC-5] fetchWithTimeout valida el origen de la URL
+               contra CFG.ALLOWED_FETCH_ORIGINS antes de hacer fetch.
+               Previene SSRF y fetches a dominios inyectados por XSS.
+               CoinGecko está en la allowlist → favicon y logos siguen
+               funcionando con normalidad.
+             - [SEC-5b] validateRpcResponse() verifica estructura
+               mínima de respuestas JSON-RPC para detectar respuestas
+               maliciosas de RPCs comprometidos.
+             - [SEC-9] validateImgUrl() verifica URLs de imágenes
+               contra CFG.ALLOWED_IMG_ORIGINS antes de asignarlas
+               al DOM, previniendo data: URIs o dominios arbitrarios.
 ================================================================ */
 const Utils = {
   /** Shorten an Ethereum address: 0x1234…5678 */
@@ -39,10 +50,6 @@ const Utils = {
   /**
    * Convert a floating-point per-token price to an 18-decimal wei string.
    * Uses toFixed(18) → BigInt conversion to avoid float precision loss.
-   * Shared between App._buyTokens() and AdminPanel.setPrice() to ensure
-   * both always use identical conversion logic.
-   * [AUDIT v5.12] Extracted from app.js/_bnbCostToWei and admin-panel.js/_toWei18
-   * which were duplicate implementations of the same function.
    * @param {number} n — floating-point price (e.g. 0.0000034)
    * @returns {string} — wei amount as decimal string, '0' on invalid input
    */
@@ -56,15 +63,71 @@ const Utils = {
   },
 
   /**
-   * Timed fetch wrapper (replaces AbortSignal.timeout which is
-   * not universally supported in iframes / older browsers).
-   * [AUDIT] Validates Content-Type before parsing JSON to avoid
-   * unhandled SyntaxError on HTML error responses (e.g. Cloudflare
-   * 503 pages returned instead of API JSON).
+   * [SEC-5] Validate that a URL's hostname is in the fetch allowlist.
+   * Prevents fetches to arbitrary domains injected via XSS or prototype
+   * pollution. CoinGecko and all BSC RPCs are in the allowlist.
+   * @param {string} url
+   * @returns {boolean}
+   */
+  _isFetchOriginAllowed(url) {
+    try {
+      const { hostname, protocol } = new URL(url);
+      if (protocol !== 'https:') return false;
+      return CFG.ALLOWED_FETCH_ORIGINS.some(
+        allowed => hostname === allowed || hostname.endsWith('.' + allowed)
+      );
+    } catch {
+      return false;
+    }
+  },
+
+  /**
+   * [SEC-9] Validate that an image URL's hostname is in the img allowlist.
+   * Prevents data: URIs and arbitrary domains from being injected into img.src.
+   * @param {string} url
+   * @returns {boolean}
+   */
+  validateImgUrl(url) {
+    if (!url || typeof url !== 'string') return false;
+    try {
+      const { hostname, protocol } = new URL(url);
+      if (protocol !== 'https:') return false;
+      return CFG.ALLOWED_IMG_ORIGINS.some(
+        allowed => hostname === allowed || hostname.endsWith('.' + allowed)
+      );
+    } catch {
+      return false;
+    }
+  },
+
+  /**
+   * [SEC-5b] Minimal validation of a JSON-RPC response object.
+   * A legitimate BSC RPC response always has an 'id' and either
+   * 'result' or 'error'. Rejects responses missing both, which
+   * could indicate a MITM/compromised RPC returning garbage.
+   * Note: Web3.js handles its own RPC parsing internally; this
+   * validator is only used for raw fetch() calls (e.g. price feeds).
+   * @param {*} data
+   * @returns {boolean}
+   */
+  validateJsonRpcResponse(data) {
+    if (!data || typeof data !== 'object') return false;
+    return 'result' in data || 'error' in data;
+  },
+
+  /**
+   * [SEC-5] Timed fetch wrapper with origin validation.
+   * Only allows fetches to domains in CFG.ALLOWED_FETCH_ORIGINS.
+   * Validates Content-Type before parsing JSON.
    * @param {string} url
    * @param {number} [ms=8000] — timeout in milliseconds
    */
   async fetchWithTimeout(url, ms = 8000) {
+    /* [SEC-5] Block fetches to non-allowlisted domains */
+    if (!this._isFetchOriginAllowed(url)) {
+      throw new Error(`[MiSwap] Fetch blocked: origin not in allowlist → ${url}`);
+    }
+
     const ctrl = new AbortController();
     const id   = setTimeout(() => ctrl.abort(), ms);
     try {
