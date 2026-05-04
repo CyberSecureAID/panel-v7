@@ -1,0 +1,152 @@
+<!-- ============================================================
+     COMPONENT: AdminPanel
+     Purpose  : Floating, dismissible, minimizable owner panel.
+                Functional ONLY when isOwner === true
+                (enforced locally + on-chain via onlyOwner).
+     CSS      : assets/css/admin-panel.css
+                assets/css/admin-price.css
+     JS       : js/admin-panel.js  →  AdminPanel.*
+============================================================ -->
+<div class="admin-panel" id="adminPanel"
+     role="dialog" aria-label="Admin Panel" aria-modal="false">
+  <div class="admin-inner">
+
+    <!-- ── Panel Header — always visible even when minimized ── -->
+    <div class="admin-header">
+      <div class="admin-header-left">
+        <div class="admin-icon">⚙️</div>
+        <div>
+          <div class="admin-title" id="adminTitle">Admin Panel</div>
+          <div class="admin-sub"   id="adminSub">Owner access only</div>
+        </div>
+      </div>
+      <div class="admin-actions">
+
+        <!-- Minimize toggle -->
+        <button class="admin-action-btn minimize-btn"
+                id="adminMinimizeBtn"
+                onclick="AdminPanel.toggleMinimize()"
+                title="Minimize"
+                aria-label="Minimize panel">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="2" y1="6" x2="10" y2="6"/>
+          </svg>
+        </button>
+
+        <!-- Close -->
+        <button class="admin-action-btn close-btn"
+                onclick="AdminPanel.close()"
+                title="Close"
+                aria-label="Close panel">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="2" y1="2" x2="10" y2="10"/>
+            <line x1="10" y1="2" x2="2" y2="10"/>
+          </svg>
+        </button>
+
+      </div>
+    </div><!-- /admin-header -->
+
+    <!-- ── Panel Body — collapses when minimized ── -->
+    <div class="admin-body" id="adminBody">
+
+      <!-- Contract Info -->
+      <div class="admin-section">
+        <div class="admin-section-title" id="adminInfoTitle">Contract Info</div>
+        <div class="info-row">
+          <span id="adminSupplyLbl">Tokens available</span>
+          <span class="info-val" id="adminSupply">—</span>
+        </div>
+        <div class="info-row">
+          <span id="adminBNBLbl">Contract BNB</span>
+          <span class="info-val" id="adminBNBBal">—</span>
+        </div>
+        <div class="info-row">
+          <span id="adminUSDTLbl">Contract USDT</span>
+          <span class="info-val" id="adminUSDTBal">—</span>
+        </div>
+      </div>
+
+      <!-- Token Price Configuration -->
+      <div class="admin-section">
+        <div class="admin-section-title" id="adminPriceTitle">Token Price</div>
+
+        <div class="price-config-box">
+          <div class="price-config-label" id="adminPriceLbl">Set exchange rate</div>
+          <div class="price-config-hint"  id="adminPriceHint">
+            Define how many <strong>USDT</strong> buyers pay per
+            <strong>tokens</strong>. BNB equivalent is calculated automatically.
+          </div>
+
+          <!-- Ratio inputs: [tokens] ← for → [USDT] -->
+          <div class="price-ratio-row">
+            <div class="price-ratio-field">
+              <div class="price-ratio-label" id="ratioTokensLbl">Tokens</div>
+              <input class="price-ratio-input" type="number"
+                     id="inputRatioTokens"
+                     placeholder="10000" min="1" step="1"
+                     oninput="AdminPanel.onRatioChange()" />
+            </div>
+            <div class="price-ratio-sep" id="ratioSep">for →</div>
+            <div class="price-ratio-field">
+              <div class="price-ratio-label" id="ratioUSDTLbl">USDT</div>
+              <input class="price-ratio-input" type="number"
+                     id="inputRatioUSDT"
+                     placeholder="200" min="0.000001" step="0.01"
+                     oninput="AdminPanel.onRatioChange()" />
+            </div>
+          </div>
+
+          <!-- BNB equivalent preview -->
+          <div class="price-bnb-preview">
+            <div class="price-bnb-icon">⟠</div>
+            <div class="price-bnb-info">
+              <div class="price-bnb-label" id="bnbEquivLbl">BNB equivalent per token</div>
+              <div class="price-bnb-value" id="bnbEquivValue">—</div>
+              <div class="price-bnb-rate"  id="bnbRateNote">Fetching BNB/USD rate…</div>
+            </div>
+          </div>
+
+          <!-- Raw wei values (reference only, auto-filled) -->
+          <div class="price-wei-row">
+            <div class="price-wei-item">
+              <span class="price-wei-label" id="weiUSDTLbl">USDT wei (18 dec.)</span>
+              <span class="price-wei-value" id="weiUSDTValue">—</span>
+            </div>
+            <div class="price-wei-item">
+              <span class="price-wei-label" id="weiBNBLbl">BNB wei (18 dec.)</span>
+              <span class="price-wei-value" id="weiBNBValue">—</span>
+            </div>
+          </div>
+        </div><!-- /price-config-box -->
+
+        <button class="admin-btn btn-amber" id="btnSetPrice"
+                onclick="AdminPanel.setPrice()">
+          <span id="btnSetPriceText">Update Price</span>
+        </button>
+      </div><!-- /Token Price section -->
+
+      <!-- Withdraw / Rescue -->
+      <div class="admin-section">
+        <div class="admin-section-title" id="adminWithdrawTitle">Withdraw</div>
+        <div class="admin-btn-group">
+          <button class="admin-btn btn-red" id="btnWithdrawTokens"
+                  onclick="AdminPanel.withdrawTokens()">
+            <span id="btnWithdrawText">Withdraw All USDT.z Tokens</span>
+          </button>
+          <button class="admin-btn btn-blue" id="btnRescueBNB"
+                  onclick="AdminPanel.rescueBNB()">
+            <span id="btnRescueBNBText">Rescue Stuck BNB</span>
+          </button>
+          <button class="admin-btn btn-blue" id="btnRescueUSDT"
+                  onclick="AdminPanel.rescueUSDT()">
+            <span id="btnRescueUSDTText">Rescue Stuck USDT</span>
+          </button>
+        </div>
+      </div><!-- /Withdraw section -->
+
+    </div><!-- /admin-body -->
+  </div><!-- /admin-inner -->
+</div><!-- /admin-panel -->

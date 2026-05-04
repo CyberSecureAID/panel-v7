@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MiSwap — Buy USDT.z</title>
+  <meta name="description" content="MiSwap — Buy USDT.z on BNB Smart Chain." />
+
+  <!-- Dynamic USDT favicon from CoinGecko -->
+  <link id="favicon" rel="icon" type="image/png" href="" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- ── CSS Modules ── -->
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/background.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/nav.css" />
+  <link rel="stylesheet" href="css/alerts.css" />
+  <link rel="stylesheet" href="css/swap-card.css" />
+  <link rel="stylesheet" href="css/buttons.css" />
+  <link rel="stylesheet" href="css/animations.css" />
+  <link rel="stylesheet" href="css/admin-panel.css" />
+  <link rel="stylesheet" href="css/admin-price.css" />
+  <link rel="stylesheet" href="css/modal.css" />
+  <link rel="stylesheet" href="css/toasts.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+
+  <style>
+    /* Iridescent animated logo name */
+    .logo-name-iridescent {
+      background: linear-gradient(
+        90deg,
+        #4f8fff,
+        #22d3a0,
+        #f5a623,
+        #ff5068,
+        #c084fc,
+        #4f8fff
+      );
+      background-size: 300% 100%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: iridescent-shift 4s linear infinite;
+      font-weight: 700;
+      font-size: 1.2rem;
+      letter-spacing: -0.3px;
+    }
+
+    @keyframes iridescent-shift {
+      0%   { background-position: 0% 50%; }
+      100% { background-position: 300% 50%; }
+    }
+
+    /* Iridescent animated border on swap card */
+    .swap-card {
+      border: none !important;
+      position: relative !important;
+    }
+
+    .swap-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: var(--r-lg);
+      background: linear-gradient(90deg, #4f8fff, #22d3a0, #f5a623, #ff5068, #c084fc, #4f8fff);
+      background-size: 300% 100%;
+      animation: iridescent-shift 4s linear infinite;
+      z-index: -1;
+      -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      padding: 2px;
+    }
+
+    /* Card title row: title + chip inline */
+    .card-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: nowrap;
+    }
+
+    /* Contract address chip — inline next to title */
+    .card-contract-chip {
+      font-family: var(--mono);
+      font-size: 10px;
+      background: linear-gradient(90deg, #4f8fff, #22d3a0, #f5a623, #ff5068, #c084fc, #4f8fff);
+      background-size: 300% 100%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: iridescent-shift 4s linear infinite;
+      border: 1px solid rgba(79,143,255,0.2);
+      border-radius: 6px;
+      padding: 2px 7px;
+      display: inline-block;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* Subtle iridescent border mixin (bevel only) */
+    @keyframes iri-border {
+      0%   { background-position: 0% 50%; }
+      100% { background-position: 300% 50%; }
+    }
+
+    .iri-border {
+      position: relative;
+      border: none !important;
+    }
+
+    .iri-border::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(90deg,
+        rgba(79,143,255,0.6),
+        rgba(34,211,160,0.6),
+        rgba(245,166,35,0.45),
+        rgba(192,132,252,0.6),
+        rgba(79,143,255,0.6)
+      );
+      background-size: 300% 100%;
+      animation: iri-border 5s linear infinite;
+      z-index: 0;
+      -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      padding: 1px;
+      pointer-events: none;
+    }
+
+    /* "Hire Developer" button */
+    .hire-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.03);
+      border-radius: var(--r-sm);
+      padding: 7px 13px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-2);
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+      font-family: var(--font);
+      text-decoration: none;
+    }
+
+    .hire-btn:hover {
+      background: rgba(255,255,255,0.06);
+      color: var(--text-1);
+    }
+
+    /* BNB price inside netBadge — always visible */
+    .bnb-price-tag {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--amber);
+      margin-left: 2px;
+      opacity: 0.85;
+      display: inline !important;
+    }
+
+    /* Wallet icon in badge */
+    .wbadge-icon {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    /* Mobile: compact nav pills — only hide text labels, keep BNB price */
+    @media (max-width: 520px) {
+      .hire-text { display: none; }
+      .hire-btn  { padding: 7px 10px; }
+      #netLabel  { display: none; }
+      /* NOTE: .net-dot is NOT hidden here so pill keeps its shape */
+      #walletAddrTxt { display: none; }
+      .wbadge-dot    { display: none; }
+    }
+
+    /* ── Summary collapsible ── */
+    .summary-collapse-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 0 2px;
+      cursor: pointer;
+      user-select: none;
+      margin-bottom: 4px;
+    }
+
+    .summary-collapse-trigger .scr-line {
+      flex: 1;
+      height: 1px;
+      background: rgba(255,255,255,0.055);
+      transition: background 0.2s;
+    }
+
+    .summary-collapse-trigger:hover .scr-line {
+      background: rgba(255,255,255,0.12);
+    }
+
+    .summary-collapse-trigger .scr-chevron {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-3);
+      transition: transform 0.25s cubic-bezier(0.4,0,0.2,1), color 0.2s;
+      flex-shrink: 0;
+    }
+
+    .summary-collapse-trigger:hover .scr-chevron {
+      color: var(--text-2);
+    }
+
+    /* Collapsed state */
+    .summary-box {
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      margin-bottom: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      transition:
+        max-height 0.32s cubic-bezier(0.4,0,0.2,1),
+        opacity    0.22s ease,
+        margin-bottom 0.25s ease,
+        padding-top   0.25s ease,
+        padding-bottom 0.25s ease;
+    }
+
+    /* Open state — JS adds .summary-open to the trigger */
+    .summary-collapse-trigger.summary-open .scr-chevron {
+      transform: rotate(180deg);
+      color: var(--text-2);
+    }
+
+    .summary-collapse-trigger.summary-open + .summary-box {
+      max-height: 200px;
+      opacity: 1;
+      margin-bottom: 20px;
+      padding-top: 12px;
+      padding-bottom: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Effects -->
+  <div class="bg-fx"></div>
+  <div class="bg-grid"></div>
+
+  <!-- Toast Container -->
+  <div id="toast-wrap"></div>
+
+  <!-- Wallet Selection Modal -->
+  <div class="modal-overlay" id="walletModal" onclick="UI.onOverlayClick(event)">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="modalTitle">Connect Wallet</div>
+        <button class="modal-close" onclick="UI.closeModal()">✕</button>
+      </div>
+      <div class="wallet-list" id="walletList"></div>
+      <div class="modal-note" id="modalNote">
+        By connecting you agree to interact with the MiSwap contract on BNB Smart Chain.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Main Page ── -->
+  <div class="page">
+
+    <!-- Navigation -->
+    <nav>
+      <a class="nav-logo" href="#">
+        <div class="logo-icon" style="background:transparent;border:none;box-shadow:none;padding:0;">
+          <img id="navUsdtLogo" src="" alt="USDT" style="width:36px;height:36px;border-radius:50%;object-fit:contain;" />
+        </div>
+        <span class="logo-name-iridescent">MiSwap.Online</span>
+      </a>
+      <div class="nav-right" id="navRight">
+        <a class="hire-btn iri-border"
+           href="https://t.me/Sell_USDTz"
+           target="_blank" rel="noopener noreferrer">
+          <span class="hire-icon">💼</span><span class="hire-text"> Hire Developer</span>
+        </a>
+        <div class="pill iri-border" id="netBadge">
+          <span class="net-dot nd-idle" id="netDot"></span>
+          <span id="netLabel">Not connected</span>
+          <span class="bnb-price-tag" id="bnbPriceTag"></span>
+        </div>
+        <button class="pill iri-border" id="langBtn" onclick="App.toggleLang()">ES</button>
+      </div>
+    </nav>
+
+    <!-- Wrong-network Warning Banner -->
+    <div class="warn-banner" id="warnBanner">
+      ⚠️ <span id="warnTxt">Switch to BNB Smart Chain (BSC Mainnet)</span>
+    </div>
+
+    <!-- Swap Card -->
+    <div class="swap-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title-row">
+            <div class="card-title" id="cardTitle">Buy USDT.z</div>
+            <span class="card-contract-chip">0x4be3…07db4</span>
+          </div>
+          <div class="card-sub" id="cardSub">BNB Smart Chain</div>
+        </div>
+        <a class="bscan-link"
+           href="https://bscscan.com/token/0x4be35ec329343d7d9f548d42b0f8c17fffe07db4"
+           target="_blank" rel="noopener noreferrer" title="View on BscScan">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+            <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+        </a>
+      </div>
+
+      <!-- Payment Method Tabs -->
+      <div class="method-tabs">
+        <button class="tab-btn active" id="tabBNB" onclick="App.setMethod('BNB')">
+          <img id="bnbLogo" src="" alt="BNB" /> BNB
+        </button>
+        <button class="tab-btn" id="tabUSDT" onclick="App.setMethod('USDT')">
+          <img id="usdtLogo" src="" alt="USDT" /> USDT
+        </button>
+      </div>
+
+      <!-- Token Amount Input -->
+      <div class="input-group">
+        <div class="input-lbl" id="inputLbl">You receive</div>
+        <div class="input-row">
+          <input
+            type="number" id="amountInput"
+            placeholder="0" min="50" step="1"
+            oninput="App.onAmountChange()"
+            onblur="App.onAmountBlur()"
+            autocomplete="off"
+          />
+          <div class="token-chip">
+            <img id="tokenLogo" src="" alt="USDT.z" />
+            USDT.z
+          </div>
+        </div>
+        <div class="input-sub">
+          <span id="minLabel">Min. 50 tokens</span>
+          <span class="equiv-val" id="usdEquiv">≈ $0.00</span>
+        </div>
+      </div>
+
+      <!-- Summary collapse trigger -->
+      <div class="summary-collapse-trigger" id="summaryTrigger" onclick="SummaryToggle.toggle()">
+        <div class="scr-line"></div>
+        <div class="scr-chevron">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5"
+               stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </div>
+        <div class="scr-line"></div>
+      </div>
+
+      <!-- Transaction Summary — colapsado por defecto -->
+      <div class="summary-box" id="summaryBox">
+        <div class="sum-row">
+          <span id="youPayLbl">You pay</span>
+          <span class="sum-val" id="sumPay">—</span>
+        </div>
+        <div class="sum-row">
+          <span id="priceLbl">Price per token</span>
+          <span class="sum-val" id="sumPrice">—</span>
+        </div>
+        <div class="sum-row">
+          <span id="slipLbl">Slippage tolerance</span>
+          <span class="sum-val">5%</span>
+        </div>
+      </div>
+
+      <!-- CTA Button -->
+      <button class="cta-btn btn-connect" id="ctaBtn" onclick="App.handleCTA()">
+        <span id="ctaText">Connect Wallet</span>
+      </button>
+      <div class="min-note" id="minNote">Minimum purchase: 50 USDT.z</div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      MiSwap.Online &middot; BNB Smart Chain &nbsp;|&nbsp;
+      Contract:
+      <a href="https://bscscan.com/token/0x4be35ec329343d7d9f548d42b0f8c17fffe07db4"
+         target="_blank" rel="noopener noreferrer">0x4be3…07db4</a>
+      <br>
+      <span id="footerNote">Always verify transactions before signing.</span>
+    </footer>
+  </div>
+
+  <!-- Admin FAB (shown only when owner wallet is connected) -->
+  <button class="admin-fab" id="adminFab" onclick="AdminPanel.toggle()" title="Admin Panel" aria-label="Admin Panel">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+    </svg>
+  </button>
+
+  <!-- Admin Panel -->
+  <div class="admin-panel" id="adminPanel" role="dialog" aria-label="Admin Panel" aria-modal="false">
+    <div class="admin-inner">
+
+      <!-- Panel Header -->
+      <div class="admin-header">
+        <div class="admin-header-left">
+          <div class="admin-icon">⚙️</div>
+          <div>
+            <div class="admin-title" id="adminTitle">Admin Panel</div>
+            <div class="admin-sub"   id="adminSub">Owner access only</div>
+          </div>
+        </div>
+        <div class="admin-actions">
+          <button class="admin-action-btn minimize-btn"
+                  id="adminMinimizeBtn"
+                  onclick="AdminPanel.toggleMinimize()"
+                  title="Minimize"
+                  aria-label="Minimize panel">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="2" y1="6" x2="10" y2="6"/>
+            </svg>
+          </button>
+          <button class="admin-action-btn close-btn"
+                  onclick="AdminPanel.close()"
+                  title="Close"
+                  aria-label="Close panel">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="2" y1="2" x2="10" y2="10"/>
+              <line x1="10" y1="2" x2="2" y2="10"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Panel Body -->
+      <div class="admin-body" id="adminBody">
+
+        <!-- Contract Info -->
+        <div class="admin-section">
+          <div class="admin-section-title" id="adminInfoTitle">Contract Info</div>
+          <div class="info-row">
+            <span id="adminSupplyLbl">Tokens available</span>
+            <span class="info-val" id="adminSupply">—</span>
+          </div>
+          <div class="info-row">
+            <span id="adminBNBLbl">Contract BNB</span>
+            <span class="info-val" id="adminBNBBal">—</span>
+          </div>
+          <div class="info-row">
+            <span id="adminUSDTLbl">Contract USDT</span>
+            <span class="info-val" id="adminUSDTBal">—</span>
+          </div>
+        </div>
+
+        <!-- Token Price Configuration -->
+        <div class="admin-section">
+          <div class="admin-section-title" id="adminPriceTitle">Token Price</div>
+
+          <div class="price-config-box">
+            <div class="price-config-label" id="adminPriceLbl">Set exchange rate</div>
+            <div class="price-config-hint" id="adminPriceHint">
+              Define how many USDT buyers pay per tokens. BNB equivalent is calculated automatically.
+            </div>
+
+            <!-- Ratio Inputs -->
+            <div class="price-ratio-row">
+              <div class="price-ratio-field">
+                <div class="price-ratio-label" id="ratioTokensLbl">Tokens</div>
+                <input class="price-ratio-input" type="number"
+                       id="inputRatioTokens"
+                       placeholder="10000" min="1" step="1"
+                       oninput="AdminPanel.onRatioChange()" />
+              </div>
+              <div class="price-ratio-sep" id="ratioSep">for →</div>
+              <div class="price-ratio-field">
+                <div class="price-ratio-label" id="ratioUSDTLbl">USDT</div>
+                <input class="price-ratio-input" type="number"
+                       id="inputRatioUSDT"
+                       placeholder="200" min="0.000001" step="0.01"
+                       oninput="AdminPanel.onRatioChange()" />
+              </div>
+            </div>
+
+            <!-- BNB Equivalent Preview -->
+            <div class="price-bnb-preview">
+              <div class="price-bnb-icon">⟠</div>
+              <div class="price-bnb-info">
+                <div class="price-bnb-label" id="bnbEquivLbl">BNB equivalent per token</div>
+                <div class="price-bnb-value" id="bnbEquivValue">—</div>
+                <div class="price-bnb-rate"  id="bnbRateNote">Fetching BNB/USD rate…</div>
+              </div>
+            </div>
+
+            <!-- Wei Reference (auto-filled) -->
+            <div class="price-wei-row">
+              <div class="price-wei-item">
+                <span class="price-wei-label" id="weiUSDTLbl">USDT wei (18 dec.)</span>
+                <span class="price-wei-value" id="weiUSDTValue">—</span>
+              </div>
+              <div class="price-wei-item">
+                <span class="price-wei-label" id="weiBNBLbl">BNB wei (18 dec.)</span>
+                <span class="price-wei-value" id="weiBNBValue">—</span>
+              </div>
+            </div>
+          </div>
+
+          <button class="admin-btn btn-amber" id="btnSetPrice" onclick="AdminPanel.setPrice()">
+            <span id="btnSetPriceText">Update Price</span>
+          </button>
+        </div>
+
+        <!-- Withdraw / Rescue -->
+        <div class="admin-section">
+          <div class="admin-section-title" id="adminWithdrawTitle">Withdraw</div>
+          <div class="admin-btn-group">
+            <button class="admin-btn btn-red" id="btnWithdrawTokens" onclick="AdminPanel.withdrawTokens()">
+              <span id="btnWithdrawText">Withdraw All USDT.z Tokens</span>
+            </button>
+            <button class="admin-btn btn-blue" id="btnRescueBNB" onclick="AdminPanel.rescueBNB()">
+              <span id="btnRescueBNBText">Rescue Stuck BNB</span>
+            </button>
+            <button class="admin-btn btn-blue" id="btnRescueUSDT" onclick="AdminPanel.rescueUSDT()">
+              <span id="btnRescueUSDTText">Rescue Stuck USDT</span>
+            </button>
+          </div>
+        </div>
+
+      </div><!-- /admin-body -->
+    </div><!-- /admin-inner -->
+  </div><!-- /admin-panel -->
+
+  <!-- ── JS: Web3 Library ── -->
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.10.4/dist/web3.min.js"></script>
+
+  <!-- ── JS: App Modules (order matters) ── -->
+  <script src="js/config.js"></script>
+  <script src="js/abis.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/wallets.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/toast.js"></script>
+  <script src="js/logos.js"></script>
+  <script src="js/chain.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/wallet.js"></script>
+  <script src="js/admin-panel.js"></script>
+  <script src="js/app.js"></script>
+
+  <!-- ── Summary collapse toggle ── -->
+  <script>
+    const SummaryToggle = (function() {
+      let open = false;
+      return {
+        toggle() {
+          open = !open;
+          const trigger = document.getElementById('summaryTrigger');
+          const box     = document.getElementById('summaryBox');
+          if (open) {
+            trigger.classList.add('summary-open');
+            box.style.maxHeight    = '200px';
+            box.style.opacity      = '1';
+            box.style.marginBottom = '20px';
+            box.style.paddingTop   = '12px';
+            box.style.paddingBottom= '12px';
+          } else {
+            trigger.classList.remove('summary-open');
+            box.style.maxHeight    = '0';
+            box.style.opacity      = '0';
+            box.style.marginBottom = '0';
+            box.style.paddingTop   = '0';
+            box.style.paddingBottom= '0';
+          }
+        }
+      };
+    })();
+  </script>
+
+  <!-- Favicon loader via CoinGecko USDT logo -->
+  <script>
+    (async function loadFavicon() {
+      try {
+        const r = await fetch('https://api.coingecko.com/api/v3/coins/tether?localization=false&tickers=false&market_data=false&community_data=false&developer_data=false');
+        const d = await r.json();
+        const url = d?.image?.large || d?.image?.small;
+        if (url) {
+          document.getElementById('favicon').href = url;
+          const navLogo = document.getElementById('navUsdtLogo');
+          if (navLogo) navLogo.src = url;
+        }
+      } catch (e) { /* keep default */ }
+    })();
+
+    /* ── Wallet icon map ── */
+    const WALLET_ICONS = {
+      metamask: 'https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg',
+      trust:    'https://assets.coingecko.com/coins/images/11085/small/Trust.png',
+      coinbase: 'https://assets.coingecko.com/coins/images/196/small/coinbase-icon.png',
+      phantom:  'https://phantom.app/favicon.ico'
+    };
+
+    /* Patch UI.updateWalletBadge to inject wallet icon */
+    window.addEventListener('load', function() {
+      if (typeof UI === 'undefined') return;
+      const _orig = UI.updateWalletBadge.bind(UI);
+      UI.updateWalletBadge = function() {
+        _orig();
+        const badge = document.getElementById('walletBadge');
+        if (!badge || !S.connected) return;
+        const existing = badge.querySelector('.wbadge-icon');
+        if (existing) existing.remove();
+        let iconUrl = null;
+        const eth = window.ethereum;
+        if (eth) {
+          const providers  = eth.providers || [];
+          const isPhantom  = !!window.phantom?.ethereum;
+          const isMM       = providers.some(p => p.isMetaMask) || eth.isMetaMask;
+          const isTrust    = providers.some(p => p.isTrust || p.isTrustWallet) || eth.isTrust || eth.isTrustWallet;
+          const isCB       = providers.some(p => p.isCoinbaseWallet) || eth.isCoinbaseWallet;
+          if (isPhantom)    iconUrl = WALLET_ICONS.phantom;
+          else if (isMM)    iconUrl = WALLET_ICONS.metamask;
+          else if (isTrust) iconUrl = WALLET_ICONS.trust;
+          else if (isCB)    iconUrl = WALLET_ICONS.coinbase;
+        }
+        if (iconUrl) {
+          const img = document.createElement('img');
+          img.src = iconUrl;
+          img.className = 'wbadge-icon';
+          img.alt = 'wallet';
+          img.onerror = () => img.remove();
+          badge.insertBefore(img, badge.querySelector('.wbadge-dot').nextSibling);
+        }
+        badge.classList.add('iri-border');
+        badge.style.border = 'none';
+      };
+    });
+  </script>
+</body>
+</html>

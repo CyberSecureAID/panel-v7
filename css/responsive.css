@@ -1,0 +1,62 @@
+/* ============================================================
+   responsive.css — Responsive Overrides
+   Purpose: Mobile breakpoint adjustments for the admin panel,
+            FAB position, swap card padding, input font size,
+            and wei reference grid layout.
+   Depends: variables.css
+============================================================ */
+
+@media (max-width: 520px) {
+  .admin-panel {
+    right: 8px;
+    width: calc(100vw - 16px);
+    bottom: 76px;
+  }
+
+  .admin-fab {
+    bottom: 16px;
+    right: 16px;
+  }
+
+  .swap-card {
+    padding: 18px 14px;
+    /* Ensure card sits flush without extra top gap */
+    margin-top: 0;
+  }
+
+  .input-row input {
+    font-size: 1.2rem;
+  }
+
+  .price-wei-row {
+    grid-template-columns: 1fr;
+  }
+
+  /* Keep BNB price tag visible on mobile */
+  .bnb-price-tag {
+    display: inline !important;
+  }
+
+  /* Keep net-dot visible on mobile for network status */
+  .net-dot {
+    display: inline-block !important;
+  }
+
+  /* Compact nav on mobile — hide text labels but keep price */
+  .hire-text { display: none; }
+  .hire-btn  { padding: 7px 10px; }
+  #netLabel  { display: none; }
+  #walletAddrTxt { display: none; }
+  .wbadge-dot    { display: none; }
+
+  /* Tighten nav bottom padding on mobile so card isn't pushed down */
+  nav {
+    padding-bottom: 16px;
+  }
+
+  /* Page padding adjustment for mobile */
+  .page {
+    padding-top: 20px;
+    padding-bottom: 60px;
+  }
+}

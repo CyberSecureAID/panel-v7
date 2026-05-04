@@ -1,0 +1,252 @@
+/* ============================================================
+   swap-card.css — Swap Card
+   Purpose: Glassmorphism card shell, card header, payment-method
+            tabs (BNB / USDT), token amount input group,
+            transaction summary box, and minimum-purchase note.
+   Depends: variables.css, buttons.css
+   NOTE   : .summary-box collapse/expand transitions are defined
+            exclusively in the <style> block inside index.html
+            (alongside the SummaryToggle JS) to avoid duplicate
+            transition rules causing conflicts in Safari/WebKit.
+============================================================ */
+
+/* — Card shell — */
+.swap-card {
+  width: 100%;
+  max-width: 480px;
+  background: rgba(10,16,32,0.85);
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-lg);
+  padding: 28px 26px 24px;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.03) inset,
+    0 30px 70px rgba(0,0,0,0.6),
+    0 0 40px rgba(79,143,255,0.04);
+}
+
+/* — Card header — */
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 26px;
+}
+
+.card-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-1);
+  letter-spacing: -0.3px;
+}
+
+.card-sub {
+  font-size: 12px;
+  color: var(--text-3);
+  margin-top: 3px;
+  font-weight: 400;
+}
+
+.bscan-link {
+  color: var(--text-3);
+  display: flex;
+  align-items: center;
+  transition: color var(--transition);
+}
+
+.bscan-link:hover {
+  color: var(--text-2);
+}
+
+/* — Method tabs (BNB / USDT) — */
+.method-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 10px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-2);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.tab-btn img {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+.tab-btn.active {
+  background: var(--accent-dim);
+  border-color: rgba(79,143,255,0.4);
+  color: var(--text-1);
+  box-shadow: 0 0 12px rgba(79,143,255,0.12);
+}
+
+.tab-btn:hover:not(.active):not(:disabled) {
+  background: var(--surface-2);
+  color: var(--text-1);
+}
+
+.tab-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* — Token amount input group — */
+.input-group {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.input-group:focus-within {
+  border-color: rgba(79,143,255,0.45);
+  box-shadow: 0 0 0 3px rgba(79,143,255,0.1);
+}
+
+/* Input group turns red-tinted when minLabel is in error state */
+.input-group:has(+ * #minLabel[style*="var(--red)"]),
+.input-group.input-warn {
+  border-color: rgba(255,80,104,0.35);
+}
+
+.input-lbl {
+  font-size: 11px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 9px;
+  font-weight: 500;
+}
+
+.input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.input-row input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-family: var(--mono);
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--text-1);
+  width: 100%;
+  min-width: 0;
+}
+
+.input-row input::placeholder {
+  color: var(--text-3);
+}
+
+/* Prevent browsers from showing spinner arrows on number input */
+.input-row input[type=number]::-webkit-inner-spin-button,
+.input-row input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.input-row input[type=number] { -moz-appearance: textfield; }
+
+.token-chip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  border-radius: 10px;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.token-chip img {
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+}
+
+.input-sub {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 7px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+
+/* minLabel transitions smoothly when it turns into a warning */
+#minLabel {
+  transition: color var(--transition);
+}
+
+.equiv-val {
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+/*
+ * .summary-box — NOTE: collapsed/expanded states and all transitions
+ * are intentionally defined only in the <style> block in index.html.
+ * Defining them here too caused conflicting transition rules in
+ * Safari/WebKit, resulting in broken animations on mobile.
+ * The base structural styles below are safe to keep here.
+ */
+.summary-box {
+  background: rgba(0,0,0,0.2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0 14px;
+}
+
+.sum-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  font-size: 13px;
+  color: var(--text-2);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.sum-row:last-child {
+  border-bottom: none;
+}
+
+.sum-val {
+  color: var(--text-1);
+  font-weight: 500;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+/* — Minimum purchase note — */
+.min-note {
+  font-size: 11px;
+  color: var(--text-3);
+  text-align: center;
+  margin-top: 10px;
+}

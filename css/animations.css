@@ -1,0 +1,22 @@
+/* ============================================================
+   animations.css — Spinner & Keyframes
+   Purpose: Loading spinner used inside CTA and admin buttons,
+            plus all @keyframes definitions.
+   Depends: variables.css
+============================================================ */
+
+/* — Spinner — */
+.spin {
+  width: 17px;
+  height: 17px;
+  border: 2.5px solid rgba(255,255,255,0.25);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spinning 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+/* — Keyframes — */
+@keyframes spinning {
+  to { transform: rotate(360deg); }
+}

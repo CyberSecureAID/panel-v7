@@ -1,0 +1,123 @@
+/* ============================================================
+   nav.css — Navigation Bar
+   Purpose: Top nav layout, logo mark, network/language pills,
+            and connected-wallet address badge.
+   Depends: variables.css
+============================================================ */
+
+nav {
+  width: 100%;
+  max-width: 860px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px 28px;
+  flex-wrap: wrap;
+  gap: 10px;
+  border-bottom: none;
+}
+
+/* — Logo — */
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: -0.3px;
+  color: var(--text-1);
+  text-decoration: none;
+}
+
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #1a3a8f 0%, #4f8fff 100%);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 18px;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(79,143,255,0.35);
+}
+
+/* — Right-side container — */
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* — Generic pill (network badge, language toggle) — */
+.pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 7px 13px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+  font-family: var(--font);
+}
+
+.pill:hover {
+  background: var(--surface-2);
+  color: var(--text-1);
+  border-color: var(--border-2);
+}
+
+/* — Network status dot — */
+.net-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.nd-ok   { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.nd-err  { background: var(--red);   box-shadow: 0 0 6px var(--red);   }
+.nd-idle { background: var(--text-3); }
+
+/* — Connected wallet address badge — */
+.wallet-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(79,143,255,0.3);
+  border-radius: var(--r-sm);
+  padding: 7px 13px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-1);
+  font-family: var(--mono);
+}
+
+.wbadge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+}
+
+/* — BNB price tag — always visible including mobile — */
+.bnb-price-tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--amber);
+  margin-left: 2px;
+  opacity: 0.85;
+  display: inline !important;
+}

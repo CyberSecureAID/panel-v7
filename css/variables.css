@@ -1,0 +1,51 @@
+/* ============================================================
+   variables.css — Design Tokens & Reset
+   Purpose: CSS custom properties (brand colors, spacing, radii,
+            typography) + universal box-model reset.
+   Usage  : Import first, before all other stylesheets.
+============================================================ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* — Brand colors — */
+  --bg:           #060a12;
+  --surface:      rgba(255,255,255,0.035);
+  --surface-2:    rgba(255,255,255,0.055);
+  --border:       rgba(255,255,255,0.07);
+  --border-2:     rgba(255,255,255,0.12);
+  --accent:       #4f8fff;
+  --accent-dim:   rgba(79,143,255,0.15);
+  --accent-glow:  rgba(79,143,255,0.25);
+  --green:        #22d3a0;
+  --green-dim:    rgba(34,211,160,0.12);
+  --red:          #ff5068;
+  --red-dim:      rgba(255,80,104,0.12);
+  --amber:        #f5a623;
+  --amber-dim:    rgba(245,166,35,0.12);
+  --text-1:       #eef2ff;
+  --text-2:       #7a8ba8;
+  --text-3:       #3d4f68;
+
+  /* — Spacing & radii — */
+  --r-sm:         8px;
+  --r-md:         14px;
+  --r-lg:         20px;
+  --transition:   0.2s cubic-bezier(0.4,0,0.2,1);
+
+  /* — Typography — */
+  --font:         'Space Grotesk', sans-serif;
+  --mono:         'JetBrains Mono', monospace;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text-1);
+  min-height: 100vh;
+  overflow-x: hidden;
+}

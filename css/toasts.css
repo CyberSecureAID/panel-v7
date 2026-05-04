@@ -1,0 +1,48 @@
+/* ============================================================
+   toasts.css — Toast Notifications
+   Purpose: Fixed bottom-left toast stack, individual toast
+            cards with type variants (success/error/info),
+            and enter/exit keyframe animations.
+   Depends: variables.css
+============================================================ */
+
+#toast-wrap {
+  position: fixed;
+  bottom: 22px;
+  left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 400;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #0e1c30;
+  border: 1px solid var(--border-2);
+  border-radius: 12px;
+  padding: 12px 15px;
+  font-size: 13px;
+  color: var(--text-1);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  animation: tIn 0.25s ease;
+  pointer-events: auto;
+  max-width: 320px;
+  line-height: 1.45;
+}
+
+.toast.s { border-left: 3px solid var(--green); }
+.toast.e { border-left: 3px solid var(--red);   }
+.toast.i { border-left: 3px solid var(--accent); }
+
+.t-ico {
+  font-size: 14px;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+
+@keyframes tIn  { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes tOut { to   { opacity: 0; transform: translateX(-20px); } }

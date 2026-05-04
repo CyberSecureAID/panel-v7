@@ -1,0 +1,20 @@
+<!-- ============================================================
+     COMPONENT: WalletModal
+     Purpose  : Overlay + modal for wallet selection.
+     CSS      : assets/css/modal.css
+     JS       : js/wallet.js  →  Wallet.connectWith()
+                js/ui.js      →  UI.openModal() / UI.closeModal()
+                               / UI.onOverlayClick() / UI.buildWalletList()
+============================================================ -->
+<div class="modal-overlay" id="walletModal" onclick="UI.onOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Connect Wallet</div>
+      <button class="modal-close" onclick="UI.closeModal()">✕</button>
+    </div>
+    <div class="wallet-list" id="walletList"></div>
+    <div class="modal-note" id="modalNote">
+      By connecting you agree to interact with the MiSwap contract on BNB Smart Chain.
+    </div>
+  </div>
+</div>

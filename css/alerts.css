@@ -1,0 +1,25 @@
+/* ============================================================
+   alerts.css — Warning / Alert Banners
+   Purpose: Wrong-network amber alert bar rendered above the
+            swap card. Hidden by default; JS adds .show.
+   Depends: variables.css
+============================================================ */
+
+.warn-banner {
+  width: 100%;
+  max-width: 480px;
+  margin-bottom: 14px;
+  background: var(--amber-dim);
+  border: 1px solid rgba(245,166,35,0.28);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--amber);
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.warn-banner.show {
+  display: flex;
+}

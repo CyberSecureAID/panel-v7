@@ -1,0 +1,126 @@
+/* ============================================================
+   buttons.css — Reusable Button Styles
+   Purpose: Base .cta-btn (large, full-width) and all its
+            colour variants (connect, buy, switch, no-stock).
+            Also admin-panel-specific .admin-btn variants.
+   Depends: variables.css
+============================================================ */
+
+/* ── CTA Button (main swap action) ── */
+.cta-btn {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: var(--r-md);
+  font-family: var(--font);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+}
+
+.cta-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.cta-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.cta-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none !important;
+  filter: none !important;
+}
+
+/* Colour variants */
+.btn-connect {
+  background: linear-gradient(135deg, #1a3a8f, #4f8fff);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(79,143,255,0.28);
+}
+
+.btn-buy {
+  background: linear-gradient(135deg, #4f8fff, #22d3a0);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(79,143,255,0.24);
+}
+
+.btn-switch {
+  background: linear-gradient(135deg, #8a5a0a, #f5a623);
+  color: #fff;
+}
+
+/* No stock — muted amber, always disabled */
+.btn-no-stock {
+  background: rgba(245,166,35,0.08);
+  border: 1px solid rgba(245,166,35,0.2);
+  color: rgba(245,166,35,0.5);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* ── Admin Buttons (inside admin panel) ── */
+.admin-btn {
+  width: 100%;
+  padding: 11px;
+  border: none;
+  border-radius: 10px;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.admin-btn:hover:not(:disabled) {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+}
+
+.admin-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.admin-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none !important;
+  filter: none !important;
+}
+
+/* Admin colour variants */
+.btn-amber {
+  background: rgba(245,166,35,0.18);
+  border: 1px solid rgba(245,166,35,0.3);
+  color: var(--amber);
+}
+
+.btn-red {
+  background: var(--red-dim);
+  border: 1px solid rgba(255,80,104,0.3);
+  color: var(--red);
+}
+
+.btn-blue {
+  background: var(--green-dim);
+  border: 1px solid rgba(34,211,160,0.3);
+  color: var(--green);
+}
+
+.admin-btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
