@@ -32,6 +32,8 @@
 ================================================================ */
 const App = (function() {
   const _SLIPPAGE        = 0.95;
+  /** [CFG] Compra mínima para el cliente (tokens USDT.z). */
+  const _MIN_PURCHASE    = 25_000;
   const _MAX_BNB_PER_TX  = 50;
   const _MAX_USDT_PER_TX = 500_000;
   const _BUY_COOLDOWN_MS = 3000;
@@ -69,7 +71,7 @@ const App = (function() {
       }
 
       const stockOk = S.availableTokens === null || S.availableTokens >= BigInt(amount) * (10n ** 18n);
-      const minOk   = amount >= 50;
+      const minOk   = amount >= _MIN_PURCHASE;
       const maxOk   = amount <= 10_000_000;
 
       if (!minOk) {
@@ -163,7 +165,7 @@ const App = (function() {
       const raw        = parseFloat(document.getElementById('amountInput').value) || 0;
       const safeAmount = Math.floor(raw);
 
-      if (safeAmount < 50) {
+      if (safeAmount < _MIN_PURCHASE) {
         Toast.show(t('minErr'), 'e');
         return;
       }
@@ -269,7 +271,7 @@ const App = (function() {
         return;
       }
 
-      if (safeAmount < 50) {
+      if (safeAmount < _MIN_PURCHASE) {
         Toast.show(t('minErr'), 'e');
         return;
       }

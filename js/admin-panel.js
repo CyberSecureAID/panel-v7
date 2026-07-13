@@ -267,7 +267,9 @@ const AdminPanel = {
       return;
     }
 
-    if (!Number.isInteger(amount) && Math.floor(amount) <= 0) {
+    /* [FIX] Antes: (!Number.isInteger(amount) && Math.floor(amount) <= 0).
+       Con && no filtraba nada: un 0 o un negativo entero pasaban el filtro. */
+    if (!Number.isFinite(amount) || Math.floor(amount) <= 0) {
       Toast.show('Amount must be a positive number.', 'e');
       return;
     }
@@ -292,32 +294,13 @@ const AdminPanel = {
     try {
       const tokenC = new w3.eth.Contract(ERC20_ABI, _saleTokenAddr);
 
-      /* Check allowance */
-      const allowanceBN = Utils.safeBigInt(
-        await tokenC.methods.allowance(S.account, CFG.ADDR).call()
-      );
-
-      /* Reset + re-approve pattern if allowance is non-zero but insufficient */
-      if (allowanceBN > 0n && allowanceBN < amountBN) {
-        const restoreInner = this._btnLoading('btnFundContract', 'btnFundContractText');
-        const btn = document.getElementById('btnFundContract');
-        if (btn) btn.innerHTML = '<span class="spin" style="width:14px;height:14px;"></span><span>Resetting allowance…</span>';
-        await tokenC.methods.approve(CFG.ADDR, '0').send({ from: S.account });
-        restoreInner();
-      }
-
-      /* Approve if needed */
-      if (allowanceBN < amountBN) {
-        const btn = document.getElementById('btnFundContract');
-        if (btn) btn.innerHTML = '<span class="spin" style="width:14px;height:14px;"></span><span>Approving…</span>';
-        await tokenC.methods.approve(CFG.ADDR, amountWei).send({ from: S.account });
-      }
-
-      /* Execute transfer using ERC20 transfer to contract */
+      /* [FIX] Aquí había un approve + reset de allowance ANTES del transfer.
+         Sobra: transfer() mueve TUS propios tokens y no consulta allowance
+         (eso solo aplica a transferFrom, que aquí no se usa). Eran una o dos
+         firmas de más y gas tirado. Ahora: una sola transacción. */
       const btn2 = document.getElementById('btnFundContract');
       if (btn2) btn2.innerHTML = '<span class="spin" style="width:14px;height:14px;"></span><span>Depositing…</span>';
 
-      /* Use transferFrom approach: owner approves, then we call transfer directly */
       await tokenC.methods.transfer(CFG.ADDR, amountWei).send({ from: S.account });
 
       Toast.show(`✅ Deposited ${depositAmount.toLocaleString()} USDT.z to contract!`, 's', 6000);
